@@ -1,36 +1,20 @@
-# NeoForged Documentation
+## 概述
 
-This repository is used to store documentation on NeoForge, the Minecraft modding API. It also contains documentation on NeoGradle, a Gradle plugin for developing NeoForge and mods using NeoForge.
+这个仓库包含部分中文翻译的neoforge文档
 
-The documentation is built using [Docusaurus 3](https://docusaurus.io)
+## 说明
 
-## Contributing
+### 翻译范围
 
-You can read the [contribution guidelines on the docs](https://docs.neoforged.net/contributing/).
+只翻译当前版本(`Documentation/docs`)的内容，因此，过往版本不会翻译。
 
-If you wish to contribute to the documentation, fork and clone this repository.
+在我有精力维护的时间内，会与原仓库保持一致。规则如下：
 
-The documentation uses Node.js 18. This can either be installed manually or using a version manager that supports `.node-version` or `.nvmrc`. For most version managers, the `install` and/or `use` command can be used to setup the correct Node.js version.
+> - 未翻译的：直接替换，保持一致
+> - 新添加的：添加英文内容或直接翻译
+> - 已经翻译而原文件无变化的：保持中文版本
+> - 已经翻译而源文件有变化的：视情况决定是修改翻译版本还是直接作为新内容替换旧内容（当替换时，旧的翻译文件会塞到往期版本的文档里头去）
 
-For example:
+### 翻译方案
 
-```bash
-nvm install # or 'nvs use'
-```
-
-You can run the following commands if you wish to preview the documentation website locally through the live development server. Most changes are reflected live without having to restart the server.
-
-```bash
-npm install
-npm run start
-```
-
-### Building
-
-If you wish to build a static version of the documentation which can be deployed, you can run the following command:
-
-```bash
-npm run build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+人工智能翻译。但是我也在看文档，所以差不多相当于会校一遍。同时，也欢迎诸君提意见。
