@@ -1,27 +1,27 @@
-# Blocks
+# 方块
 
-Blocks are essential to the Minecraft world. They make up all the terrain, structures, and machines. Chances are if you are interested in making a mod, then you will want to add some blocks. This page will guide you through the creation of blocks, and some of the things you can do with them.
+方块是 Minecraft 世界的基础。它们构成了所有的地形、结构和机器。如果你有兴趣制作一个模组，那么你很可能会想要添加一些方块。本页面将指导你完成方块的创建，以及你可以对它们做的一些事情。
 
-## One Block to Rule Them All
+## 万物归一的方块
 
-Before we get started, it is important to understand that there is only ever one of each block in the game. A world consists of thousands of references to that one block in different locations. In other words, the same block is just displayed a lot of times.
+在开始之前，重要的是要理解游戏中每种方块永远只有一个实例。一个世界由成千上万个对那个方块在不同位置的引用组成。换句话说，同一个方块只是被显示了很多次。
 
-Due to this, a block should only ever be instantiated once, and that is during [registration]. Once the block is registered, you can then use the registered reference as needed.
+因此，一个方块应该只被实例化一次，那就是在[注册][registration]期间。一旦方块被注册，你就可以根据需要使用已注册的引用。
 
-Unlike most other registries, blocks can use a specialized version of `DeferredRegister`, called `DeferredRegister.Blocks`. `DeferredRegister.Blocks` acts basically like a `DeferredRegister<Block>`, but with some minor differences:
+与大多数其他注册表不同，方块可以使用一个特殊版本的 `DeferredRegister`，称为 `DeferredRegister.Blocks`。`DeferredRegister.Blocks` 的作用基本上就像一个 `DeferredRegister<Block>`，但有一些细微的差别：
 
-- They are created via `DeferredRegister.createBlocks("yourmodid")` instead of the regular `DeferredRegister.create(...)` method.
-- `#register` returns a `DeferredBlock<T extends Block>`, which extends `DeferredHolder<Block, T>`. `T` is the type of the class of the block we are registering.
-- There are a few helper methods for registering block. See [below] for more details.
+-   它们通过 `DeferredRegister.createBlocks("yourmodid")` 创建，而不是常规的 `DeferredRegister.create(...)` 方法。
+-   `#register` 返回一个 `DeferredBlock<T extends Block>`，它扩展了 `DeferredHolder<Block, T>`。`T` 是我们正在注册的方块类的类型。
+-   有一些用于注册方块的辅助方法。更多详情请见[下文][below]。
 
-So now, let's register our blocks:
+那么现在，让我们来注册我们的方块：
 
 ```java
 //BLOCKS is a DeferredRegister.Blocks
 public static final DeferredBlock<Block> MY_BLOCK = BLOCKS.register("my_block", registryName -> new Block(...));
 ```
 
-After registering the block, all references to the new `my_block` should use this constant. For example, if you want to check if the block at a given position is `my_block`, the code for that would look something like this:
+注册方块后，所有对新 `my_block` 的引用都应使用这个常量。例如，如果你想检查给定位置的方块是否是 `my_block`，代码会是这样的：
 
 ```java
 level.getBlockState(position) // returns the blockstate placed in the given level (world) at the given position
@@ -29,42 +29,42 @@ level.getBlockState(position) // returns the blockstate placed in the given leve
     .is(MyBlockRegistrationClass.MY_BLOCK);
 ```
 
-This approach also has the convenient effect that `block1 == block2` works and can be used instead of Java's `equals` method (using `equals` still works, of course, but is pointless since it compares by reference anyway).
+这种方法还有一个方便的效果，即 `block1 == block2` 是有效的，并且可以用来替代 Java 的 `equals` 方法（当然，使用 `equals` 仍然有效，但没有意义，因为它也是通过引用进行比较的）。
 
 :::danger
-Do not call `new Block()` outside registration! As soon as you do that, things can and will break:
+不要在注册之外调用 `new Block()`！一旦你这么做，事情就会出问题：
 
-- Blocks must be created while registries are unfrozen. NeoForge unfreezes registries for you and freezes them later, so registration is your time window to create blocks.
-- If you try to create and/or register a block when registries are frozen again, the game will crash and report a `null` block, which can be very confusing.
-- If you still manage to have a dangling block instance, the game will not recognize it while syncing and saving, and replace it with air.
+-   方块必须在注册表未冻结时创建。NeoForge 会为你解冻注册表，并在之后冻结它们，所以注册是你创建方块的时间窗口。
+-   如果你试图在注册表再次冻结时创建和/或注册一个方块，游戏将会崩溃并报告一个 `null` 方块，这可能会非常令人困惑。
+-   如果你仍然设法拥有一个悬空的方块实例，游戏在同步和保存时将无法识别它，并会将其替换为空气。
 :::
 
-## Creating Blocks
+## 创建方块
 
-As discussed before, we start by creating our `DeferredRegister.Blocks`:
+如前所述，我们首先创建我们的 `DeferredRegister.Blocks`：
 
 ```java
 public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks("yourmodid");
 ```
 
-### Basic Blocks
+### 基本方块
 
-For simple blocks which need no special functionality (think cobblestone, wooden planks, etc.), the `Block` class can be used directly. To do so, during registration, instantiate `Block` with a `BlockBehaviour.Properties` parameter. This `BlockBehaviour.Properties` parameter can be created using `BlockBehaviour.Properties#of`, and it can be customized by calling its methods. The most important methods for this are:
+对于不需要特殊功能的简单方块（比如圆石、木板等），可以直接使用 `Block` 类。为此，在注册期间，用一个 `BlockBehaviour.Properties` 参数实例化 `Block`。这个 `BlockBehaviour.Properties` 参数可以使用 `BlockBehaviour.Properties#of` 创建，并且可以通过调用其方法进行自定义。其中最重要的方法有：
 
-- `setId` - Sets the resource key of the block.
-    - This **must** be set on every block; otherwise, an exception will be thrown.
-- `destroyTime` - Determines the time the block needs to be destroyed.
-    - Stone has a destroy time of 1.5, dirt has 0.5, obsidian has 50, and bedrock has -1 (unbreakable).
-- `explosionResistance` - Determines the explosion resistance of the block.
-    - Stone has an explosion resistance of 6.0, dirt has 0.5, obsidian has 1,200, and bedrock has 3,600,000.
-- `sound` - Sets the sound the block makes when it is punched, broken, or placed.
-    - The default value is `SoundType.STONE`. See the [Sounds page][sounds] for more details.
-- `lightLevel` - Sets the light emission of the block. Accepts a function with a `BlockState` parameter that returns a value between 0 and 15.
-    - For example, glowstone uses `state -> 15`, and torches use `state -> 14`.
-- `friction` - Sets the friction (slipperiness) of the block.
-    - Default value is 0.6. Ice uses 0.98.
+-   `setId` - 设置方块的资源键。
+    -   这**必须**在每个方块上设置；否则将抛出异常。
+-   `destroyTime` - 决定方块被破坏所需的时间。
+    -   石头的破坏时间是 1.5，泥土是 0.5，黑曜石是 50，而基岩是 -1（不可破坏）。
+-   `explosionResistance` - 决定方块的抗爆性。
+    -   石头的抗爆性是 6.0，泥土是 0.5，黑曜石是 1,200，而基岩是 3,600,000。
+-   `sound` - 设置方块在被敲击、破坏或放置时发出的声音。
+    -   默认值是 `SoundType.STONE`。更多详情请见[声音页面][sounds]。
+-   `lightLevel` - 设置方块的发光等级。接受一个带有 `BlockState` 参数的函数，该函数返回一个 0 到 15 之间的值。
+    -   例如，荧石使用 `state -> 15`，而火把使用 `state -> 14`。
+-   `friction` - 设置方块的摩擦力（滑度）。
+    -   默认值是 0.6。冰使用 0.98。
 
-So for example, a simple implementation would look something like this:
+因此，举个例子，一个简单的实现会是这样的：
 
 ```java
 //BLOCKS is a DeferredRegister.Blocks
@@ -81,25 +81,25 @@ public static final DeferredBlock<Block> MY_BETTER_BLOCK = BLOCKS.register(
     ));
 ```
 
-For further documentation, see the source code of `BlockBehaviour.Properties`. For more examples, or to look at the values used by Minecraft, have a look at the `Blocks` class.
+如需更多文档，请参阅 `BlockBehaviour.Properties` 的源代码。如需更多示例，或查看 Minecraft 使用的值，请查看 `Blocks` 类。
 
 :::note
-It is important to understand that a block in the world is not the same thing as in an inventory. What looks like a block in an inventory is actually a `BlockItem`, a special type of [item] that places a block when used. This also means that things like the creative tab or the max stack size are handled by the corresponding `BlockItem`.
+重要的是要理解，世界中的方块与物品栏中的方块不是一回事。物品栏中看起来像方块的东西实际上是一个 `BlockItem`，这是一种特殊的[物品][item]，使用时会放置一个方块。这也意味着像创造模式物品栏或最大堆叠数量这样的东西是由相应的 `BlockItem` 处理的。
 
-A `BlockItem` must be registered separately from the block. This is because a block does not necessarily need an item, for example if it is not meant to be collected (as is the case with fire, for example).
+`BlockItem` 必须与方块分开注册。这是因为一个方块不一定需要一个物品，例如，如果它不打算被收集（就像火一样）。
 :::
 
-### More Functionality
+### 更多功能
 
-Directly using `Block` only allows for very basic blocks. If you want to add functionality, like player interaction or a different hitbox, a custom class that extends `Block` is required. The `Block` class has many methods that can be overridden to do different things; see the classes `Block`, `BlockBehaviour` and `IBlockExtension` for more information. See also the [Using blocks][usingblocks] section below for some of the most common use cases for blocks.
+直接使用 `Block` 只允许创建非常基本的方块。如果你想添加功能，比如玩家交互或不同的碰撞箱，就需要一个扩展 `Block` 的自定义类。`Block` 类有许多可以被覆写以实现不同功能的方法；更多信息请参阅 `Block`、`BlockBehaviour` 和 `IBlockExtension` 类。另请参阅下面的[使用方块][usingblocks]部分，了解一些最常见的方块用例。
 
-If you want to make a block that has different variants (think a slab that has a bottom, top, and double variant), you should use [blockstates]. And finally, if you want a block that stores additional data (think a chest that stores its inventory), a [block entity][blockentities] should be used. The rule of thumb here is that if you have a finite and reasonably small amount of states (= a few hundred states at most), use blockstates, and if you have an infinite or near-infinite amount of states, use a block entity.
+如果你想制作一个有不同变种的方块（比如有底部、顶部和双层变种的台阶），你应该使用[方块状态][blockstates]。最后，如果你想要一个能存储额外数据的方块（比如存储其物品栏的箱子），应该使用[方块实体][blockentities]。这里的经验法则是，如果你有有限且数量合理的状态（最多几百个状态），就使用方块状态；如果你有无限或接近无限数量的状态，就使用方块实体。
 
-#### Block Types
+#### 方块类型
 
-Block types are [`MapCodec`s][codec] used to serialize and deserialize a block object. This `MapCodec` is set via `BlockBehaviour#codec` and [registered][registration] to the block type registry. Currently, its only use is when the block list report is being generated. A block type should be created once for every subclass of `Block`. For example, `FlowerBlock#CODEC` represents the block type for most flowers while its subclass `WitherRoseBlock` has a separate block type.
+方块类型是用于序列化和反序列化方块对象的 [`MapCodec`][codec]。此 `MapCodec` 通过 `BlockBehaviour#codec` 设置，并[注册][registration]到方块类型注册表。目前，它唯一的用途是在生成方块列表报告时。应为 `Block` 的每个子类创建一个方块类型。例如，`FlowerBlock#CODEC` 代表大多数花的方块类型，而其子类 `WitherRoseBlock` 有一个单独的方块类型。
 
-If the block subclass only takes in the `BlockBehaviour.Properties`, then `BlockBehaviour#simpleCodec` can be used to create the `MapCodec`.
+如果方块子类只接收 `BlockBehaviour.Properties`，那么可以使用 `BlockBehaviour#simpleCodec` 来创建 `MapCodec`。
 
 ```java
 // For some block subclass
@@ -123,7 +123,7 @@ public static final Supplier<MapCodec<SimpleBlock>> SIMPLE_CODEC = REGISTRAR.reg
 );
 ```
 
-If the block subclass contains more parameters, then [`RecordCodecBuilder#mapCodec`][codec] should be used to create the `MapCodec`, passing in `BlockBehaviour#propertiesCodec` for the `BlockBehaviour.Properties` parameter.
+如果方块子类包含更多参数，则应使用 [`RecordCodecBuilder#mapCodec`][codec] 来创建 `MapCodec`，为 `BlockBehaviour.Properties` 参数传入 `BlockBehaviour#propertiesCodec`。
 
 ```java
 // For some block subclass
@@ -157,12 +157,12 @@ public static final Supplier<MapCodec<ComplexBlock>> COMPLEX_CODEC = REGISTRAR.r
 ```
 
 :::note
-Although block types are basically unused at the moment, it is expected to become more important in the future as Mojang continues moving towards a codec-centered structure.
+尽管方块类型目前基本上没有被使用，但随着 Mojang 继续向以编解码器为中心的结构发展，预计它在未来会变得更加重要。
 :::
 
-### `DeferredRegister.Blocks` helpers
+### `DeferredRegister.Blocks` 辅助方法
 
-We already discussed how to create a `DeferredRegister.Blocks` [above], as well as that it returns `DeferredBlock`s. Now, let's have a look at what other utilities the specialized `DeferredRegister` has to offer. Let's start with `#registerBlock`:
+我们已经在[上文][above]讨论了如何创建一个 `DeferredRegister.Blocks`，以及它会返回 `DeferredBlock`。现在，让我们看看这个专门的 `DeferredRegister` 还提供了哪些其他实用功能。让我们从 `#registerBlock` 开始：
 
 ```java
 public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks("yourmodid");
@@ -184,7 +184,7 @@ public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerBlock(
 );
 ```
 
-If you want to use `Block::new`, you can leave out the factory entirely:
+如果你想使用 `Block::new`，你可以完全省略工厂方法：
 
 ```java
 public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBlock(
@@ -193,39 +193,39 @@ public static final DeferredBlock<Block> EXAMPLE_BLOCK = BLOCKS.registerSimpleBl
 );
 ```
 
-This does the exact same as the previous example, but is slightly shorter. Of course, if you want to use a subclass of `Block` and not `Block` itself, you will have to use the previous method instead.
+这与上一个例子的作用完全相同，但稍微短一些。当然，如果你想使用 `Block` 的子类而不是 `Block` 本身，你就必须使用前一种方法。
 
-### Resources
+### 资源
 
-If you register your block and place it in the world, you will find it to be missing things like a texture. This is because [textures], among others, are handled by Minecraft's resource system. To apply the texture to the block, you must provide a [model] and a [blockstate file][bsfile] that associates the block with the texture and a shape. Give the linked articles a read for more information.
+如果你注册了你的方块并将其放置在世界中，你会发现它缺少像纹理之类的东西。这是因为[纹理][textures]等是由 Minecraft 的资源系统处理的。要将纹理应用于方块，你必须提供一个[模型][model]和一个将方块与纹理和形状关联起来的[方块状态文件][bsfile]。请阅读链接的文章以获取更多信息。
 
-## Using Blocks
+## 使用方块
 
-Blocks are very rarely directly used to do things. In fact, probably two of the most common operations in all of Minecraft - getting the block at a position, and setting a block at a position - use blockstates, not blocks. The general design approach is to have the block define behavior, but have the behavior actually run through blockstates. Due to this, `BlockState`s are often passed to methods of `Block` as a parameter. For more information on how blockstates are used, and on how to get one from a block, see [Using Blockstates][usingblockstates].
+方块很少被直接用来做事情。事实上，Minecraft 中可能最常见的两种操作——获取一个位置的方块，以及在一个位置设置一个方块——都使用方块状态，而不是方块。一般的设计方法是让方块定义行为，但让行为实际通过方块状态来运行。因此，`BlockState` 经常作为参数传递给 `Block` 的方法。关于如何使用方块状态以及如何从一个方块中获取一个方块状态的更多信息，请参阅[使用方块状态][usingblockstates]。
 
-In several situations, multiple methods of `Block` are used at different times. The following subsections list the most common block-related pipelines. Unless specified otherwise, all methods are called on both logical sides and should return the same result on both sides.
+在几种情况下，`Block` 的多个方法在不同时间被使用。以下小节列出了最常见的与方块相关的流程。除非另有说明，所有方法都在两个逻辑侧调用，并且应在两侧返回相同的结果。
 
-### Placing a Block
+### 放置方块
 
-Block placement logic is called from `BlockItem#useOn` (or some subclass's implementation thereof, such as in `PlaceOnWaterBlockItem`, which is used for lily pads). For more information on how the game gets there, see [Right-Clicking Items][rightclick]. In practice, this means that as soon as a `BlockItem` is right-clicked (for example a cobblestone item), this behavior is called.
+方块放置逻辑是从 `BlockItem#useOn`（或其子类的实现，例如用于睡莲的 `PlaceOnWaterBlockItem`）调用的。有关游戏如何到达此处的更多信息，请参阅[右键点击物品][rightclick]。实际上，这意味着一旦一个 `BlockItem` 被右键点击（例如一个圆石物品），这个行为就会被调用。
 
-- Several prerequisites are checked, for example that you are not in spectator mode, that all required feature flags for the block are enabled or that the target position is not outside the world border. If at least one of these checks fails, the pipeline ends.
-- `BlockBehaviour#canBeReplaced` is called for the block currently at the position where the block is attempted to be placed. If it returns `false`, the pipeline ends. Prominent cases that return `true` here are tall grass or snow layers.
-- `Block#getStateForPlacement` is called. This is where, depending on the context (which includes information like the position, the rotation and the side the block is placed on), different block states can be returned. This is useful for example for blocks that can be placed in different directions.
-- `BlockBehaviour#canSurvive` is called with the blockstate obtained in the previous step. If it returns `false`, the pipeline ends.
-- The blockstate is set into the level via a `Level#setBlock` call.
-    - In that `Level#setBlock` call, `BlockBehaviour#onPlace` is called.
-- `Block#setPlacedBy` is called.
+-   检查几个先决条件，例如你不在观察者模式下，方块所需的所有特性标志都已启用，或者目标位置没有超出世界边界。如果至少有一个检查失败，流程结束。
+-   在尝试放置方块的位置上，对当前方块调用 `BlockBehaviour#canBeReplaced`。如果它返回 `false`，流程结束。这里返回 `true` 的著名案例是高草或雪层。
+-   调用 `Block#getStateForPlacement`。根据上下文（包括位置、旋转和方块放置的面等信息），这里可以返回不同的方块状态。这对于例如可以朝不同方向放置的方块很有用。
+-   用上一步获得的方块状态调用 `BlockBehaviour#canSurvive`。如果它返回 `false`，流程结束。
+-   通过调用 `Level#setBlock` 将方块状态设置到世界中。
+    -   在该 `Level#setBlock` 调用中，会调用 `BlockBehaviour#onPlace`。
+-   调用 `Block#setPlacedBy`。
 
-### Breaking a Block
+### 破坏方块
 
-Breaking a block is a bit more complex, as it requires time. The process can be roughly divided into three stages: "initiating", "mining" and "actually breaking".
+破坏方块要复杂一些，因为它需要时间。这个过程大致可以分为三个阶段：“初始化”、“挖掘中”和“实际破坏”。
 
-- When the left mouse button is clicked, the "initiating" stage is entered. 
-- Now, the left mouse button needs to be held down, entering the "mining" stage. **This stage's methods are called every tick.**
-- If the "continuing" stage is not interrupted (by releasing the left mouse button) and the block is broken, the "actually breaking" stage is entered.
+-   当鼠标左键被点击时，进入“初始化”阶段。
+-   现在，需要按住鼠标左键，进入“挖掘中”阶段。**这个阶段的方法每 tick 都会被调用。**
+-   如果“挖掘中”阶段没有被中断（通过释放鼠标左键）并且方块被破坏，则进入“实际破坏”阶段。
 
-Or for those who prefer pseudocode:
+对于喜欢伪代码的人：
 
 ```java
 leftClick();
@@ -239,48 +239,48 @@ while (leftClickIsBeingHeld()) {
 }
 ```
 
-The following subsections further break down these stages into actual method calls. For information about how the game gets from left-clicking to this pipeline, see [Left-Clicking an Item][leftclick].
+以下小节将这些阶段进一步分解为实际的方法调用。有关游戏如何从左键点击到这个流程的信息，请参阅[左键点击物品][leftclick]。
 
-#### The "Initiating" Stage
+#### “初始化”阶段
 
-- Several prerequisites are checked, for example that you are not in spectator mode, that all required feature flags for the `ItemStack` in your main hand are enabled or that the block in question is not outside the world border. If at least one of these checks fails, the pipeline ends.
-- `PlayerInteractEvent.LeftClickBlock` is fired. If the event is canceled, the pipeline ends.
-    - Note that when the event is canceled on the client, no packets are sent to the server and thus no logic runs on the server.
-    - However, canceling this event on the server will still cause client code to run, which can lead to desyncs!
-- `BlockBehaviour#attack` is called.
+-   检查几个先决条件，例如你不在观察者模式下，你主手中的 `ItemStack` 所需的所有特性标志都已启用，或者所讨论的方块没有超出世界边界。如果至少有一个检查失败，流程结束。
+-   触发 `PlayerInteractEvent.LeftClickBlock` 事件。如果事件被取消，流程结束。
+    -   请注意，当事件在客户端被取消时，不会向服务器发送数据包，因此服务器上不会运行任何逻辑。
+    -   然而，在服务器上取消此事件仍会导致客户端代码运行，这可能导致不同步！
+-   调用 `BlockBehaviour#attack`。
 
-#### The "Mining" Stage
+#### “挖掘中”阶段
 
-- `PlayerInteractEvent.LeftClickBlock` is fired. If the event is canceled, the pipeline moves to the "finishing" stage.
-    - Note that when the event is canceled on the client, no packets are sent to the server and thus no logic runs on the server.
-    - However, canceling this event on the server will still cause client code to run, which can lead to desyncs!
-- `BlockBehaviour#getDestroyProgress` is called and added to the internal destroy progress counter.
-    - `BlockBehaviour#getDestroyProgress` returns a float value between 0 and 1, representing how much the destroy progress counter should be increased every tick.
-- The progress overlay (cracking texture) is updated accordingly.
-- If the destroy progress is greater than 1.0 (i.e. completed, i.e. the block should be broken), the "mining" stage is exited and the "actually breaking" stage is entered.
+-   触发 `PlayerInteractEvent.LeftClickBlock` 事件。如果事件被取消，流程将进入“结束”阶段。
+    -   请注意，当事件在客户端被取消时，不会向服务器发送数据包，因此服务器上不会运行任何逻辑。
+    -   然而，在服务器上取消此事件仍会导致客户端代码运行，这可能导致不同步！
+-   调用 `BlockBehaviour#getDestroyProgress` 并将其值加到内部的破坏进度计数器上。
+    -   `BlockBehaviour#getDestroyProgress` 返回一个 0 到 1 之间的浮点值，表示每 tick 应该增加多少破坏进度计数器。
+-   进度覆盖层（裂纹纹理）相应更新。
+-   如果破坏进度大于 1.0（即完成，即方块应该被破坏），则退出“挖掘中”阶段，进入“实际破坏”阶段。
 
-#### The "Actually Breaking" Stage
+#### “实际破坏”阶段
 
-- `Item#canDestroyBlock` is called. If it returns `false` (determining that the block should not be broken), the pipeline moves to the "finishing" stage.
-- `Player#canUseGameMasterBlocks` is called if the block is an instance of `GameMasterBlock`. This determines whether the player has the ability to destroy creative-only blocks. If `false`, the pipeline moves to the "finishing" stage.
-- Server-only: `Player#blockActionRestricted` is called. This determines whether the current player cannot break the block. If `true`, the pipeline moves to the "finishing" stage.
-- Server-only: `BlockEvent.BreakEvent` is fired. If canceled, the pipeline moves to the "finishing" stage. The initial canceled state is determined by the above three methods.
-- `Block#playerWillDestroy` is called.
-- Server-only: `IBlockExtension#canHarvestBlock` is called. This determines whether the block can be harvested, i.e. broken with drops. This will be ignored if `Player#preventsBlockDrops` returns true.
-    - Server-only: `PlayerEvent.HarvestCheck` is fired if `IBlockExtension#canHarvestBlock` is not overriden without its super call. If `canHarvest` returns `false`, then `Block#playerDestroy` will not be called, preventing any resources or experience from dropping.
-- `IBlockExtension#onDestroyedByPlayer` is called. If it returns `false`, the pipeline moves to the "finishing" stage.
-    - The blockstate is removed from the level via a `Level#setBlock` call with `Blocks.AIR.defaultBlockState()` or the current logged fluid as the blockstate parameter.
-        - In that `Level#setBlock` call, `Block#onRemove` is called.
-    - `Block#destroy` is called if `IBlockExtension#onDestroyedByPlayer` returns `true`.
-- Server-only: If the previous call to `IBlockExtension#canHarvestBlock` and `IBlockExtension#onDestroyedByPlayer` return `true`, then `Block#playerDestroy` is called.
-    - Server-only: `Block#dropResources` is called. This determines what drops from the block when mined, including experience.
-        - Server-only: `BlockDropsEvent` is fired. If the event is canceled, then nothing is dropped when the block breaks. Otherwise, every `ItemEntity` in `BlockDropsEvent#getDrops` is added to the current level. Additionally, `Block#popExperience` is called if `getDroppedExperience` is greater than 0.
-            - Server-only: `IBlockExtension#getExpDrop` is called, augmented by `EnchantmentHelper#processBlockExperience`. This is the initial value set for `BlockDropsEvent#getDroppedExperience` before potentally being modified.
-- Server-only: `PlayerDestroyItemEvent` is fired if the item used to mine the block broke at any point in the above process.
+-   调用 `Item#canDestroyBlock`。如果它返回 `false`（确定方块不应被破坏），流程将进入“结束”阶段。
+-   如果方块是 `GameMasterBlock` 的实例，则调用 `Player#canUseGameMasterBlocks`。这决定了玩家是否有能力破坏仅限创造模式的方块。如果为 `false`，流程将进入“结束”阶段。
+-   仅限服务器：调用 `Player#blockActionRestricted`。这决定了当前玩家是否不能破坏该方块。如果为 `true`，流程将进入“结束”阶段。
+-   仅限服务器：触发 `BlockEvent.BreakEvent` 事件。如果被取消，流程将进入“结束”阶段。初始的取消状态由上述三种方法决定。
+-   调用 `Block#playerWillDestroy`。
+-   仅限服务器：调用 `IBlockExtension#canHarvestBlock`。这决定了方块是否可以被采集，即破坏时掉落物品。如果 `Player#preventsBlockDrops` 返回 true，这将别忽略。
+    -   仅限服务器：如果 `IBlockExtension#canHarvestBlock` 没有被覆写（或覆写时调用了父类方法），则触发 `PlayerEvent.HarvestCheck` 事件。如果 `canHarvest` 返回 `false`，那么 `Block#playerDestroy` 将不会被调用，从而阻止任何资源或经验掉落。
+-   调用 `IBlockExtension#onDestroyedByPlayer`。如果它返回 `false`，流程将进入“结束”阶段。
+    -   通过 `Level#setBlock` 调用，并将 `Blocks.AIR.defaultBlockState()` 或当前记录的流体作为方块状态参数，将方块状态从关卡中移除。
+        -   在该 `Level#setBlock` 调用中，会调用 `Block#onRemove`。
+    -   如果 `IBlockExtension#onDestroyedByPlayer` 返回 `true`，则调用 `Block#destroy`。
+-   仅限服务器：如果之前对 `IBlockExtension#canHarvestBlock` 和 `IBlockExtension#onDestroyedByPlayer` 的调用都返回 `true`，则调用 `Block#playerDestroy`。
+    -   仅限服务器：调用 `Block#dropResources`。这决定了方块被挖掘时掉落什么，包括经验。
+        -   仅限服务器：触发 `BlockDropsEvent` 事件。如果事件被取消，则方块破坏时不会掉落任何东西。否则，`BlockDropsEvent#getDrops` 中的每个 `ItemEntity` 都会被添加到当前关卡中。此外，如果 `getDroppedExperience` 大于 0，则调用 `Block#popExperience`。
+            -   仅限服务器：调用 `IBlockExtension#getExpDrop`，并由 `EnchantmentHelper#processBlockExperience` 增强。这是 `BlockDropsEvent#getDroppedExperience` 在可能被修改之前的初始值。
+-   仅限服务器：如果在上述过程中用于挖掘方块的物品损坏，则触发 `PlayerDestroyItemEvent` 事件。
 
-#### Mining Speed
+#### 挖掘速度
 
-The mining speed is calculated from the block's hardness, the used [tool]'s speed, and several entity [attributes] according to the following rules:
+挖掘速度是根据方块的硬度、所用[工具][tool]的速度以及几个实体[属性][attributes]按以下规则计算的：
 
 ```java
 // This will return the tool's mining speed, or 1 if the held item is either empty, not a tool,
@@ -324,35 +324,35 @@ destroySpeed = /* The PlayerEvent.BreakSpeed event is fired here, allowing modde
 return destroySpeed;
 ```
 
-The exact code for this can be found in `Player#getDestroySpeed` for reference.
+此确切代码可在 `Player#getDestroySpeed` 中找到以供参考。
 
-### Ticking
+### 游戏刻（Ticking）
 
-Ticking is a mechanism that updates (ticks) parts of the game every 1 / 20 seconds, or 50 milliseconds ("one tick"). Blocks provide different ticking methods that are called in different ways.
+游戏刻是一种机制，每 1/20 秒，即 50 毫秒（“一个游戏刻”）更新（tick）游戏的某些部分。方块提供了不同的游戏刻方法，它们以不同的方式被调用。
 
-#### Server Ticking and Tick Scheduling
+#### 服务端游戏刻与计划刻
 
-`BlockBehaviour#tick` is called in two occasions: either through default [random ticking][randomtick] (see below), or through scheduled ticks. Scheduled ticks can be created through `Level#scheduleTick(BlockPos, Block, int)`, where the `int` denotes a delay. This is used in various places by vanilla, for example, the tilting mechanism of big dripleaves heavily relies on this system. Other prominent users are various redstone components.
+`BlockBehaviour#tick` 在两种情况下被调用：通过默认的[随机刻][randomtick]（见下文），或通过计划刻。计划刻可以通过 `Level#scheduleTick(BlockPos, Block, int)` 创建，其中 `int` 表示延迟。这在原版的很多地方都有使用，例如，大型垂滴叶的倾斜机制就严重依赖这个系统。其他著名的使用者是各种红石元件。
 
-#### Client Ticking
+#### 客户端游戏刻
 
-`Block#animateTick` is called exclusively on the client, every frame. This is where client-only behavior, for example the torch particle spawning, happens.
+`Block#animateTick` 仅在客户端上每帧调用一次。这是客户端独有行为发生的地方，例如火把粒子生成。
 
-#### Weather Ticking
+#### 天气刻
 
-Weather ticking is handled by `Block#handlePrecipitation` and runs independent of regular ticking. It is called only on the server, only when it is raining in some form, with a 1 in 16 chance. This is used for example by cauldrons that fill during rain or snowfall.
+天气刻由 `Block#handlePrecipitation` 处理，并且独立于常规的游戏刻运行。它仅在服务器上调用，仅在下雨或下雪时，有 1/16 的几率。例如，炼药锅在雨雪天气中会接水，就是利用了这个机制。
 
-#### Random Ticking
+#### 随机刻
 
-The random tick system runs independent of regular ticking. Random ticks must be enabled through the `BlockBehaviour.Properties` of the block by calling the `BlockBehaviour.Properties#randomTicks()` method. This enables the block to be part of the random ticking mechanic.
+随机刻系统独立于常规的游戏刻运行。必须通过方块的 `BlockBehaviour.Properties` 调用 `BlockBehaviour.Properties#randomTicks()` 方法来启用随机刻。这使得方块能够参与随机刻机制。
 
-Random ticks occur every tick for a set amount of blocks in a chunk. That set amount is defined through the `randomTickSpeed` gamerule. With its default value of 3, every tick, 3 random blocks from the chunk are chosen. If these blocks have random ticking enabled, then their respective `BlockBehaviour#randomTick` methods are called.
+在一个区块中，每个游戏刻都会对一定数量的方块进行随机刻。这个数量由 `randomTickSpeed` 游戏规则定义。其默认值为 3，即每个游戏刻，从区块中选择 3 个随机方块。如果这些方块启用了随机刻，那么它们各自的 `BlockBehaviour#randomTick` 方法就会被调用。
 
-Random ticking is used by a wide range of mechanics in Minecraft, such as plant growth, ice and snow melting, or copper oxidizing.
+Minecraft 中的许多机制都使用了随机刻，例如植物生长、冰雪融化或铜氧化。
 
-[above]: #one-block-to-rule-them-all
+[above]: #万物归一的方块
 [attributes]: ../entities/attributes.md
-[below]: #deferredregisterblocks-helpers
+[below]: #deferredregisterblocks-辅助方法
 [blockentities]: ../blockentities/index.md
 [blockstates]: states.md
 [bsfile]: ../resources/client/models/index.md#blockstate-files
@@ -361,11 +361,11 @@ Random ticking is used by a wide range of mechanics in Minecraft, such as plant 
 [leftclick]: ../items/interactions.md#left-clicking-an-item
 [model]: ../resources/client/models/index.md
 [randomtick]: #random-ticking
-[registration]: ../concepts/registries.md#methods-for-registering
+[registration]: ../concepts/registries.md#注册方法
 [resources]: ../resources/index.md#assets
 [rightclick]: ../items/interactions.md#right-clicking-an-item
 [sounds]: ../resources/client/sounds.md
 [textures]: ../resources/client/textures.md
 [tool]: ../items/tools.md
-[usingblocks]: #using-blocks
-[usingblockstates]: states.md#using-blockstates
+[usingblocks]: #使用方块
+[usingblockstates]: states.md#使用方块状态

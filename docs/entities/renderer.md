@@ -1,15 +1,15 @@
 ---
 sidebar_position: 5
 ---
-# Entity Renderers
+# 实体渲染器
 
-Entity renderers are used to define rendering behavior for an entity. They only exist on the [logical and physical client][sides].
+实体渲染器用于定义实体的渲染行为。它们仅存在于[逻辑和物理客户端][sides]上。
 
-Entity rendering uses what is known as entity render states. Simply put, this is an object that holds all values that the renderer needs. Every time the entity is rendered, the render state is updated, and then the `#render` method uses that render state to render the entity. This is probably intended to be adapted into a deferred rendering system at some point, where the render information is collected beforehand (which could potentially be multithreaded) and rendering then happens at a later point in time.
+实体渲染采用所谓的实体渲染状态。简单来说，这是一个持有渲染器所需的所有值的对象。每次渲染实体时，都会更新渲染状态，然后 `#render` 方法使用该渲染状态来渲染实体。这可能是为了在某个时候将其适配为延迟渲染系统，即预先收集渲染信息（这可能可以多线程处理），然后在稍后的时间点进行渲染。
 
-## Creating an Entity Renderer
+## 创建一个实体渲染器
 
-The simplest entity renderer is one that directly extends `EntityRenderer`:
+最简单的实体渲染器是直接继承 `EntityRenderer` 的渲染器：
 
 ```java
 // The generic type in the superclass should be set to what entity you want to render.
@@ -35,7 +35,7 @@ public class MyEntityRenderer extends EntityRenderer<Entity, EntityRenderState> 
         super.extractRenderState(entity, state, partialTick);
         // Extract and store any additional values in the state here.
     }
-    
+  
     // Actually render the entity. The first parameter matches the render state's generic type.
     // Calling super will handle leash and name tag rendering for you, if applicable.
     @Override
@@ -46,7 +46,7 @@ public class MyEntityRenderer extends EntityRenderer<Entity, EntityRenderState> 
 }
 ```
 
-Now that we have our entity renderer, we also need to register it and connect it to its owning entity. This is done in [`EntityRenderersEvent.RegisterRenderers`][events] like so:
+现在我们有了实体渲染器，我们还需要注册它并将其与所属实体连接。这是在 [`EntityRenderersEvent.RegisterRenderers`][events] 中完成的，如下所示：
 
 ```java
 @SubscribeEvent // on the mod event bus only on the physical client
@@ -55,9 +55,9 @@ public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderer
 }
 ```
 
-## Entity Render States
+## 实体渲染状态
 
-As mentioned before, entity render states are used to separate values used for rendering from the actual entity's values. There's nothing more to them, they are really just mutable data storage objects. As such, extending is really easy:
+如前所述，实体渲染状态用于将渲染所用的值与实体本身的实际值分离开来。它们没有其他更深层的含义，它们真的只是可变的数据存储对象。因此，扩展起来非常简单：
 
 ```java
 public class MyEntityRenderState extends EntityRenderState {
@@ -65,13 +65,13 @@ public class MyEntityRenderState extends EntityRenderState {
 }
 ```
 
-That's literally it. Extend the class, add your field, change the generic type in `EntityRenderer` to your class, and off you go. The only thing left to do now is to update that `stackInHand` field in `EntityRenderer#extractRenderState`, as explained above.
+就这么简单。继承该类，添加你的字段，将 `EntityRenderer` 中的泛型类型更改为你的类，然后你就可以开始了。现在唯一剩下的事情就是在 `EntityRenderer#extractRenderState` 中更新那个 `stackInHand` 字段，如上所述。
 
-### Render State Modifications
+### 渲染状态修改
 
-In addition to being able to define new entity render states, NeoForge introduces a system that allows modifying existing render states.
+除了能够定义新的实体渲染状态外，NeoForge 还引入了一个允许修改现有渲染状态的系统。
 
-To do so, a `ContextKey<T>` (where `T` is the type of the data you want to change) can be created and stored in a static field. Then, you can use it in an event handler for the `RegisterRenderStateModifiersEvent` like so:
+为此，可以创建一个 `ContextKey<T>`（其中 `T` 是您想更改的数据的类型）并将其存储在一个静态字段中。然后，您可以在 `RegisterRenderStateModifiersEvent` 的事件处理程序中使用它，如下所示：
 
 ```java
 public static final ContextKey<String> EXAMPLE_CONTEXT = new ContextKey<>(
@@ -88,7 +88,7 @@ public static void registerRenderStateModifiers(RegisterRenderStateModifiersEven
         // Exact generic types are inferred from the generics in the renderer class used.
         (entity, state) -> state.setRenderData(EXAMPLE_CONTEXT, "Hello World!");
     );
-    
+  
     // Overload of the above method that accepts a Class<?>.
     // This should ONLY be used for renderers without any generics, such as PlayerRenderer.
     event.registerEntityModifier(
@@ -99,18 +99,18 @@ public static void registerRenderStateModifiers(RegisterRenderStateModifiersEven
 ```
 
 :::tip
-By passing `null` as the second parameter to `EntityRenderState#setRenderData`, the value can be cleared. For example:
+通过向 `EntityRenderState#setRenderData` 传递 `null` 作为第二个参数，可以清除该值。例如：
 
 ```java
 state.setRenderData(EXAMPLE_CONTEXT, null);
 ```
 :::
 
-This data can then be retrieved via `EntityRenderState#getRenderData` where needed. Helper methods `#getRenderDataOrThrow` and `#getRenderDataOrDefault` are available as well.
+然后可以在需要的地方通过 `EntityRenderState#getRenderData` 检索此数据。还提供了帮助方法 `#getRenderDataOrThrow` 和 `#getRenderDataOrDefault`。
 
-## Hierarchy
+## 继承体系
 
-Like entities themselves, entity renderers have a class hierarchy, though not as layered. The most important classes of the hierarchy are related like this (red classes are `abstract`, blue classes are not):
+和实体本身一样，实体渲染器也有一个类继承体系，但没有那么分层。该继承体系中最重要的类之间的关系如下（红色类是`abstract`，蓝色类不是）：
 
 ```mermaid
 graph LR;
@@ -123,45 +123,45 @@ graph LR;
     MobRenderer-->AgeableMobRenderer;
     AgeableMobRenderer-->HumanoidMobRenderer;
     LivingEntityRenderer-->PlayerRenderer;
-    
+  
     class EntityRenderer,AbstractBoatRenderer,AbstractMinecartRenderer,ArrowRenderer,LivingEntityRenderer,MobRenderer,AgeableMobRenderer,HumanoidMobRenderer red;
     class ArmorStandRenderer,PlayerRenderer blue;
 ```
 
-- `EntityRenderer`: The abstract base class. Many renderers, notably almost all renderers for non-living entities, extend this class directly.
-- `ArrowRenderer`, `AbstractBoatRenderer`, `AbstractMinecartRenderer`: These exist mainly for convenience, and are used as parents for more specific renderers.
-- `LivingEntityRenderer`: The abstract base class for renderers for [living entities][livingentity]. Direct subclasses include `ArmorStandRenderer` and `PlayerRenderer`.
-- `ArmorStandRenderer`: Self-explanatory.
-- `PlayerRenderer`: Used to render players. Note that unlike most other renderers, multiple instances of this class used for different contexts may exist at the same time.
-- `MobRenderer`: The abstract base class for renderers for `Mob`s. Many renderers extend this directly.
-- `AgeableMobRenderer`: The abstract base class for renderers for `Mob`s that have child variants. This includes monsters with child variants, such as hoglins.
-- `HumanoidMobRenderer`: The abstract base class for humanoid entity renderers. Used by e.g. zombies and skeletons.
+- `EntityRenderer`：抽象基类。许多渲染器，尤其是几乎所有非生物实体的渲染器，都直接继承此类。
+- `ArrowRenderer`, `AbstractBoatRenderer`, `AbstractMinecartRenderer`：这些类的存在主要是为了方便，并被用作更具体的渲染器的父类。
+- `LivingEntityRenderer`：用于[生物实体][livingentity]渲染器的抽象基类。直接子类包括 `ArmorStandRenderer` 和 `PlayerRenderer`。
+- `ArmorStandRenderer`：不言自明。
+- `PlayerRenderer`：用于渲染玩家。请注意，与大多数其他渲染器不同，可能同时存在用于不同上下文的该类的多个实例。
+- `MobRenderer`：用于 `Mob` 渲染器的抽象基类。许多渲染器直接继承此类。
+- `AgeableMobRenderer`：用于具有幼年变种的 `Mob` 渲染器的抽象基类。这包括具有幼年变种的怪物，例如疣猪兽。
+- `HumanoidMobRenderer`：人形实体渲染器的抽象基类。例如，僵尸和骷髅使用此类。
 
-As with the various entity classes, use what fits your use case most. Be aware that many of these classes have corresponding type bounds in their generics; for example, `LivingEntityRenderer` has type bounds for `LivingEntity` and `LivingEntityRenderState`.
+与各种实体类一样，请使用最适合您用例的类。请注意，其中许多类在其泛型中具有相应的类型界限；例如，`LivingEntityRenderer` 对 `LivingEntity` 和 `LivingEntityRenderState` 有类型界限。
 
-## Entity Models, Layer Definitions and Render Layers
+## 实体模型、图层定义和渲染图层
 
-More complex entity renderers, notably `LivingEntityRenderer`, use a layer system, where each layer is represented as a `RenderLayer`. A renderer can use multiple `RenderLayer`s, and the renderer can decide what layer(s) to render at what time. For example, the elytra uses a separate layer that is rendered independently of the `LivingEntity` wearing it. Similarly, player capes are also a separate layer.
+更复杂的实体渲染器，特别是 `LivingEntityRenderer`，使用一个图层系统，其中每个图层由一个 `RenderLayer` 表示。一个渲染器可以使用多个 `RenderLayer`，并且渲染器可以决定在什么时候渲染哪个（些）图层。例如，鞘翅使用一个独立的图层，其渲染独立于佩戴它的 `LivingEntity`。类似地，玩家斗篷也是一个独立的图层。
 
-`RenderLayer`s define a `#render` method, which - surprise! - renders the layer. As with most other render methods, you can basically render whatever you want in here. However, a very common use case is to render a separate model in here, for example for armor or similar pieces of equipment.
+`RenderLayer`s 定义了一个 `#render` 方法，它——惊喜！——渲染图层。与大多数其他渲染方法一样，你基本上可以在这里渲染任何你想要的东西。然而，一个非常常见的用例是在这里渲染一个单独的模型，例如用于护甲或类似的装备部件。
 
-For this, we first need a model we can render. We use the `EntityModel` class to do this. `EntityModel`s are basically a list of cubes and associated textures for the renderer to use. They are commonly created statically when the entity renderer's constructor is first created.
+为此，我们首先需要一个可以渲染的模型。我们使用 `EntityModel` 类来做到这一点。`EntityModel` 基本上是供渲染器使用的立方体和相关纹理的列表。它们通常在实体渲染器的构造函数首次创建时静态创建。
 
 :::note
-Since we now operate on `LivingEntityRenderer`s, the following code will assume that `MyEntity extends LivingEntity` and `MyEntityRenderState extends LivingEntityRenderState`, to match generic type bounds.
+由于我们现在操作的是 `LivingEntityRenderer`，以下代码将假设 `MyEntity extends LivingEntity` 且 `MyEntityRenderState extends LivingEntityRenderState`，以匹配泛型类型界限。
 :::
 
-### Creating an Entity Model Class and a Layer Definition
+### 创建实体模型类和图层定义
 
-Let's start by creating an entity model class:
+让我们从创建一个实体模型类开始：
 
 ```java
 public class MyEntityModel extends EntityModel<MyEntityRenderState> {}
 ```
 
-Note that in the above example, we directly extend `EntityModel`; depending on your use case, it might be more appropriate to use one of the subclasses instead. When creating a new model, it is recommended you have a look at whatever existing model is closest to your use case, and then work from there.
+请注意，在上面的示例中，我们直接继承了 `EntityModel`；根据您的用例，使用其子类之一可能更合适。创建新模型时，建议您查看与您用例最接近的现有模型，然后以此为基础进行操作。
 
-Next, we create a `LayerDefinition`. A `LayerDefinition` is basically a list of cubes that we can then bake to an `EntityModel`. Defining a `LayerDefinition` looks something like this:
+接下来，我们创建一个 `LayerDefinition`。`LayerDefinition` 基本上是一个立方体列表，然后我们可以将其烘焙成一个 `EntityModel`。定义一个 `LayerDefinition` 看起来像这样：
 
 ```java
 public class MyEntityModel extends EntityModel<MyEntityRenderState> {
@@ -217,14 +217,14 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
 ```
 
 :::tip
-The [Blockbench][blockbench] modeling program is a great help in creating entity models. To do so, choose the Modded Entity option when creating your model in Blockbench.
+[Blockbench][blockbench] 建模程序是创建实体模型的好帮手。为此，请在 Blockbench 中创建模型时选择“Modded Entity”选项。
 
-Blockbench also has an option to export models as a `LayerDefinition` creation method, which can be found under `File -> Export -> Export Java Entity`.
+Blockbench 还有一个选项，可以将模型导出为 `LayerDefinition` 创建方法，可以在 `File -> Export -> Export Java Entity` 中找到。
 :::
 
-### Registering a Layer Definition
+### 注册图层定义
 
-Once we have our entity layer definition, we need to register it in `EntityRenderersEvent.RegisterLayerDefinitions`. To do so, we need a `ModelLayerLocation`, which essentially acts as an identifier for our layer (remember, one entity can have multiple layers).
+有了实体图层定义后，我们需要在 `EntityRenderersEvent.RegisterLayerDefinitions` 中注册它。为此，我们需要一个 `ModelLayerLocation`，它实质上充当了我们图层的标识符（记住，一个实体可以有多个图层）。
 
 ```java
 // Our ModelLayerLocation.
@@ -244,15 +244,15 @@ public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDe
 }
 ```
 
-### Creating a Render Layer and Baking a Layer Definition
+### 创建渲染图层并烘焙图层定义
 
-The next step is to bake the layer definition, something for which we will first return to the entity model class:
+下一步是烘焙图层定义，为此我们将首先回到实体模型类：
 
 ```java
 public class MyEntityModel extends EntityModel<MyEntityRenderState> {
     // Storing specific model parts as fields for use below.
     private final ModelPart head;
-    
+  
     // The ModelPart passed here is the root of our baked model.
     // We will get to the actual baking in just a moment.
     public MyEntityModel(ModelPart root) {
@@ -279,13 +279,13 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
 }
 ```
 
-Now that our model is able to properly receive a baked `ModelPart`, we can create our `RenderLayer` subclass and use it for baking the `LayerDefinition` like so:
+现在我们的模型能够正确地接收烘焙后的 `ModelPart`，我们可以创建我们的 `RenderLayer` 子类并使用它来烘焙 `LayerDefinition`，如下所示：
 
 ```java
 // The generic parameters need the proper types you used everywhere else up to this point.
 public class MyRenderLayer extends RenderLayer<MyEntityRenderState, MyEntityModel> {
     private final MyEntityModel model;
-    
+  
     // Create the render layer. The renderer parameter is required for passing to super.
     // Other parameters can be added as needed. For example, we need the EntityModelSet for model baking.
     public MyRenderLayer(MyEntityRenderer renderer, EntityModelSet entityModelSet) {
@@ -302,9 +302,9 @@ public class MyRenderLayer extends RenderLayer<MyEntityRenderState, MyEntityMode
 }
 ```
 
-### Adding a Render Layer to an Entity Renderer
+### 将渲染图层添加到实体渲染器
 
-Finally, to tie it all together, we can add the layer to our renderer (which, if you remember, now needs to be a living renderer) like so:
+最后，为了将所有这些结合起来，我们可以将图层添加到我们的渲染器中（如果您还记得的话，它现在需要是一个生物渲染器），如下所示：
 
 ```java
 // Plugging in our custom render state class as the generic type.
@@ -346,9 +346,9 @@ public class MyEntityRenderer extends LivingEntityRenderer<MyEntity, MyEntityRen
 }
 ```
 
-### All At Once
+### 一次性概览
 
-A bit much? Since this system is quite complex, here's all the components listed again with (almost) no fluff:
+有点多了？由于这个系统相当复杂，这里再次列出了所有组件，（几乎）没有多余的说明：
 
 ```java
 public class MyEntity extends LivingEntity {...}
@@ -365,7 +365,7 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
             "main"
     );
     private final ModelPart head;
-    
+  
     public MyEntityModel(ModelPart root) {
         super(root);
         this.head = root.getChild("head");
@@ -395,7 +395,7 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
 ```java
 public class MyRenderLayer extends RenderLayer<MyEntityRenderState, MyEntityModel> {
     private final MyEntityModel model;
-    
+  
     public MyRenderLayer(MyEntityRenderer renderer, EntityModelSet entityModelSet) {
         super(renderer);
         this.model = new MyEntityModel(entityModelSet.bakeLayer(MyEntityModel.MY_LAYER));
@@ -451,9 +451,9 @@ public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderer
 }
 ```
 
-## Modifying Existing Entity Renderers
+## 修改现有实体渲染器
 
-In some scenarios, it is desirable to add to an existing entity renderer, e.g. for rendering additional effects on an existing entity. Most of the time, this will affect living entities, i.e., entities with a `LivingEntityRenderer`. This enables us to add [render layers][renderlayer] to an entity like so:
+在某些情况下，需要对现有实体渲染器进行补充，例如，为现有实体渲染额外的效果。大多数情况下，这会影响生物实体，即具有 `LivingEntityRenderer` 的实体。这使我们能够像这样向实体添加[渲染层][renderlayer]：
 
 ```java
 @SubscribeEvent // on the mod event bus only on the physical client
@@ -473,7 +473,7 @@ public static void addLayers(EntityRenderersEvent.AddLayers event) {
 }
 ```
 
-For players, a bit of special-casing is required because there can actually be multiple player renderers. These are managed separately by the event. We can interact with them like so:
+对于玩家，需要进行一些特殊处理，因为实际上可以有多个玩家渲染器。这些由事件单独管理。我们可以像这样与它们交互：
 
 ```java
 @SubscribeEvent // on the mod event bus only on the physical client
@@ -490,11 +490,11 @@ public static void addPlayerLayers(EntityRenderersEvent.AddLayers event) {
 }
 ```
 
-## Animations
+## 动画
 
-Minecraft includes an animation system for entity models through the `AnimationDefinition` class. NeoForge adds a system that allows these entity animations to be defined in JSON files, similar to third-party libraries such as [GeckoLib][geckolib].
+Minecraft 通过 `AnimationDefinition` 类为实体模型提供了一个动画系统。NeoForge 添加了一个系统，允许这些实体动画在 JSON 文件中定义，类似于第三方库如 [GeckoLib][geckolib]。
 
-Animations are defined in JSON files located at `assets/<namespace>/neoforge/animations/entity/<path>.json` (so for the [resource location][rl] `examplemod:example`, the file would be located at `assets/examplemod/neoforge/animations/entity/example.json`). The format of an animation file is as follows:
+动画在位于 `assets/<namespace>/neoforge/animations/entity/<path>.json` 的 JSON 文件中定义（因此对于[资源位置][rl]`examplemod:example`，文件将位于 `assets/examplemod/neoforge/animations/entity/example.json`）。动画文件的格式如下：
 
 ```json5
 {
@@ -530,10 +530,10 @@ Animations are defined in JSON files located at `assets/<namespace>/neoforge/ani
 ```
 
 :::tip
-It is highly recommended to use this system in combination with the [Blockbench][blockbench] modeling software, which offers an [animation to JSON plugin][bbplugin].
+强烈建议将此系统与 [Blockbench][blockbench] 建模软件结合使用，该软件提供了一个[动画转 JSON 插件][bbplugin]。
 :::
 
-In your model, you can then use the animation like so:
+在你的模型中，你可以像这样使用动画：
 
 ```java
 public class MyEntityModel extends EntityModel<MyEntityRenderState> {
@@ -550,14 +550,14 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
         // It should cover all referenced bones
         this.example = EXAMPLE_ANIMATION.get().bake(root);
     }
-    
+  
     // Other stuff here.
-    
+  
     @Override
     public void setupAnim(MyEntityRenderState state) {
         super.setupAnim(state);
         // Other stuff here.
-        
+      
         this.example.apply(
             // Get the animation state to use from your EntityRenderState.
             state.myAnimationState,
@@ -572,15 +572,15 @@ public class MyEntityModel extends EntityModel<MyEntityRenderState> {
 }
 ```
 
-### Keyframe Targets
+### 关键帧目标
 
-NeoForge adds the following keyframe targets out of the box:
+NeoForge 开箱即用地添加了以下关键帧目标：
 
-- `minecraft:position`: The target values are set as the position values of the part.
-- `minecraft:rotation`: The target values are set as the rotation values of the part.
-- `minecraft:scale`: The target values are set as the scale values of the part.
+- `minecraft:position`：目标值被设置为部件的位置值。
+- `minecraft:rotation`：目标值被设置为部件的旋转值。
+- `minecraft:scale`：目标值被设置为部件的缩放值。
 
-Custom values can be added by creating a new `AnimationTarget` and registering it in `RegisterJsonAnimationTypesEvent` like so:
+可以通过创建一个新的 `AnimationTarget` 并在 `RegisterJsonAnimationTypesEvent` 中注册它来添加自定义值，如下所示：
 
 ```java
 @SubscribeEvent // on the mod event bus only on the physical client
@@ -594,14 +594,14 @@ public static void registerJsonAnimationTypes(RegisterJsonAnimationTypesEvent ev
 }
 ```
 
-### Keyframe Interpolations
+### 关键帧插值
 
-NeoForge adds the following keyframe interpolations out of the box:
+NeoForge 内置了以下关键帧插值方法：
 
-- `minecraft:linear`: Linear interpolation.
-- `minecraft:catmullrom`: Interpolation along a [Catmull-Rom spline][catmullrom].
+- `minecraft:linear`：线性插值。
+- `minecraft:catmullrom`：沿 [Catmull-Rom 样条][catmullrom]进行插值。
 
-Custom interpolations can be added by creating a new `AnimationChannel.Interpolation` (which is a functional interface) and registering it in `RegisterJsonAnimationTypesEvent` like so:
+可以通过创建一个新的 `AnimationChannel.Interpolation`（这是一个函数式接口）并在 `RegisterJsonAnimationTypesEvent` 中注册它来添加自定义插值，如下所示：
 
 ```java
 @SubscribeEvent // on the mod event bus only on the physical client
